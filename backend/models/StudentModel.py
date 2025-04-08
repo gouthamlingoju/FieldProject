@@ -2,35 +2,35 @@ from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
 
 class Student(BaseModel):
-    student_id: Optional[str] = None  # Auto-generated ID
-    degree_code: str
+    student_id: Optional[str] = None
+    degree_code: Optional[str] = None
     hall_ticket_no: Optional[str] = None
-    name: str
-    father_name: str
-    mother_name: str
-    date_of_birth: str  # Store as YYYY-MM-DD format
-    gender: str
+    name: Optional[str] = None
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    date_of_birth: Optional[str] = None  # Store as YYYY-MM-DD format
+    gender: Optional[str] = None
     identification_mark_1: Optional[str] = None
     identification_mark_2: Optional[str] = None
     
     # 10th Details
-    tenth_board_name: str
-    tenth_school_name: str
-    tenth_hall_ticket_no: str
-    tenth_max_marks: int
-    tenth_total_marks: str
-    tenth_percentage: float
-    tenth_month_year: str
+    tenth_board_name: Optional[str] = None
+    tenth_school_name: Optional[str] = None
+    tenth_hall_ticket_no: Optional[str] = None
+    tenth_max_marks: Optional[int] = None
+    tenth_total_marks: Optional[str] = None
+    tenth_percentage: Optional[float] = None
+    tenth_month_year: Optional[str] = None
     
     # 12th Details
-    twelfth_board_name: str
-    twelfth_college_name: str
-    twelfth_hall_ticket_no: str
-    twelfth_max_marks: int
-    twelfth_total_marks: str
-    twelfth_percentage: float
-    twelfth_subject_scores: dict  # Dictionary for M1, M2, P1, P2, etc.
-    twelfth_month_year: str
+    twelfth_board_name: Optional[str] = None
+    twelfth_college_name: Optional[str] = None
+    twelfth_hall_ticket_no: Optional[str] = None
+    twelfth_max_marks: Optional[int] = None
+    twelfth_total_marks: Optional[str] = None
+    twelfth_percentage: Optional[float] = None
+    twelfth_subject_scores: Optional[dict] = None
+    twelfth_month_year: Optional[str] = None
     
     # Entrance Exams
     eamcet_hall_ticket_no: Optional[str] = None
@@ -40,43 +40,43 @@ class Student(BaseModel):
     
     # Personal Info
     aadhaar_card_number: Optional[str] = None
-    mother_tongue: str
-    student_phone_no: str
-    parent_phone_no: str
+    mother_tongue: Optional[str] = None
+    student_phone_no: Optional[str] = None
+    parent_phone_no: Optional[str] = None
     vnr_email: Optional[EmailStr] = None
-    student_email: EmailStr
+    student_email: Optional[EmailStr] = None
     parent_email: Optional[EmailStr] = None
     
     # Reservation & Category
-    reservation: bool
-    category_name: str
-    caste_as_per_tc: str
-    ebc_status: bool
-    ews_status: bool
+    reservation: Optional[bool] = None
+    category_name: Optional[str] = None
+    caste_as_per_tc: Optional[str] = None
+    ebc_status: Optional[bool] = None
+    ews_status: Optional[bool] = None
     income: Optional[int] = None
     
     # Medical & Nationality
     blood_group: Optional[str] = None
-    nationality: str
-    religion: str
-    minority_status: bool
+    nationality: Optional[str] = None
+    religion: Optional[str] = None
+    minority_status: Optional[bool] = None
     
     # Address
-    address_door_no: str
-    address_street: str
-    address_village_town: str
-    address_mandal: str
-    address_district: str
-    address_state: str
-    address_pincode: str
-    rural_urban: str
+    address_door_no: Optional[str] = None
+    address_street: Optional[str] = None
+    address_village_town: Optional[str] = None
+    address_mandal: Optional[str] = None
+    address_district: Optional[str] = None
+    address_state: Optional[str] = None
+    address_pincode: Optional[str] = None
+    rural_urban: Optional[str] = None
     
     # College Details
-    admission_category: str
+    admission_category: Optional[str] = None
     section: Optional[str] = None
-    branch_code: str
-    college_code: str
+    branch_code: Optional[str] = None
+    college_code: Optional[str] = None
     
     # Special Status
-    ph_status: bool
-    scribe_needed: bool
+    ph_status: Optional[bool] = None
+    scribe_needed: Optional[bool] = None
