@@ -8,8 +8,10 @@ import Vnrheader from "./components/Vnrheader";
 function App() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Vnrheader />
-      <div className="flex-1 overflow-auto">
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Vnrheader />
+      </div>
+      <div className="flex-1 overflow-auto mt-16 mb-16">
         <Router>
           <Routes>
             <Route path="/" element={<Navigate to="/login" />} />
@@ -18,7 +20,9 @@ function App() {
           </Routes>
         </Router>
       </div>
-      <Footer />
+      <div className="fixed bottom-0 left-0 right-0 z-50 mt-20">
+        <Footer />
+      </div>
     </div>
   );
 }
