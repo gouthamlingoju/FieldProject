@@ -1,40 +1,22 @@
 import React from 'react';
+import { IoSearchSharp } from "react-icons/io5";
+import { student } from '../assets/students.json';
+import { useState } from 'react';
+
 
 const Dashboard = () => {
+
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredStudents = student.filter((s) =>
+    s.student_name.trim().toLowerCase().includes(searchTerm.toLowerCase().trim())
+  );
   return (
     <div className="bg-gray-100 min-h-full">
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">Certificate Verification Dashboard</h2>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Required Certificates Section */}
-            <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-              <div className="p-6">
-                <h3 className="text-lg font-medium text-indigo-600 mb-4">Required Documents</h3>
-                <ul className="space-y-3 text-gray-600">
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    SSC (10th) Certificate
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Intermediate (12th) Certificate
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Transfer Certificate
-                  </li>
-                </ul>
-              </div>
-            </div>
-
             {/* Verification Status Section */}
             <div className="bg-white overflow-hidden shadow-sm rounded-lg">
               <div className="p-6">
@@ -78,34 +60,44 @@ const Dashboard = () => {
           {/* Recent Activity Section */}
           <div className="mt-8 bg-white shadow-sm rounded-lg mb-10">
             <div className="p-6">
-              <h3 className="text-lg font-medium text-indigo-600 mb-4">Recent Activity</h3>
+              <div className="flex justify-between mb-4">
+                <h3 className="text-lg font-medium text-indigo-600 mb-4">Student Verification Activity</h3>
+                <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by Name"
+                value= {searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-white w-64 pl-6 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"/>
+              <IoSearchSharp className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 cursor-pointer hover:bg-gray-500 hover:text-gray-200 rounded transition-colors" />
+            </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year of Admission</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     </tr>
                   </thead>
+                  
                   <tbody className="bg-white divide-y divide-gray-200">
-                    <tr>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">John Doe</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">SSC Certificate</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Verified</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2024-02-20</td>
-                    </tr>
-                    <tr>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Jane Smith</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Intermediate Certificate</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Pending</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2024-02-19</td>
-                    </tr>                    
+                    {                          
+                    filteredStudents.map((s, index)=> {
+                      return(
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s.student_name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.year_of_admission}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${s.status === "Verified" ? "bg-green-100 text-green-800" : ""} ${s.status === "Pending" ? "bg-yellow-100 text-yellow-800" : ""} ${s.status === "Not Verified" ? "bg-red-100 text-red-800" : ""}`}>{s.status}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.date}</td>
+                          </tr>
+                      )
+                    })  
+                    }                 
                     {/* Add more rows as needed */}
                   </tbody>
                 </table>
