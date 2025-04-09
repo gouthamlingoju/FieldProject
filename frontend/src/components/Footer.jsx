@@ -8,7 +8,6 @@ function Footer() {
         <div className='flex'>
         <ul className='p-0'>
             <li>L. Goutham</li>
-            <li>M. Harshavardhan</li>
             <li>G. Charmi Bai</li>
         </ul>
         <ul>
