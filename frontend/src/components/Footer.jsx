@@ -2,13 +2,12 @@ import React from 'react'
 
 function Footer() {
   return (
-    <div className='bg-gray-120 bottom-0 w-full pt-4 shadow shadow-md flex justify-between mt-5 px-8 fixed z-100 bg-white'>
+    <div className='bg-gray-120 bottom-0 w-full pt-4 shadow shadow-md flex justify-between mt-5 px-8 fixed z-100 bg-white pb-3'>
       <div>
         <h5>Project by:</h5>
         <div className='flex'>
-        <ul className='p-0'>
+        <ul className='pr-10'>
             <li>L. Goutham</li>
-            <li>M. Harshavardhan</li>
             <li>G. Charmi Bai</li>
         </ul>
         <ul>
