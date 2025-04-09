@@ -25,3 +25,4 @@ class FormModel(BaseModel):
     transferCertificate: Optional[str] = ""
     bloodGroup: Optional[str] = ""
     address: Address
+    branch: Optional[str] = ""
