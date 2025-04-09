@@ -1,10 +1,15 @@
 import React from 'react'
+import { useTheme } from '../context/ThemeContext';
 
 function Footer() {
+  const { isDarkMode } = useTheme();
+  
   return (
-    <div className='bg-gray-120 bottom-0 w-full pt-4 shadow shadow-md flex justify-between mt-5 px-8 fixed z-100 bg-white pb-3'>
+    <div className={`bottom-0 w-full pt-4 shadow-md flex justify-between mt-5 px-8 fixed z-100 pb-3 ${
+      isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
+    }`}>
       <div>
-        <h5>Project by:</h5>
+        <h5 className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Project by:</h5>
         <div className='flex'>
         <ul className='pr-10'>
             <li>L. Goutham</li>
@@ -17,7 +22,7 @@ function Footer() {
         </div>
       </div>  
       <div>
-        <h5>Project Guided by: </h5>
+        <h5 className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Project Guided by: </h5>
         <ul className='p-0'>
             <li>Dr. V. Baby, HOD [CSE, VNRVJIET]</li>
             <li>Dr. B.V. Kiranmayee, Professor [CSE, VNRVJIET]</li>
