@@ -18,20 +18,19 @@ identification_marks1: Identification marks (if any)
 identification_marks2: Identification marks (if any)
 
 
-Please return the result in Dictionary format with exact field names as mentioned above 
+Please return the result in Dictionary format with exact field names as mentioned above  (if any field not found return null)
 just Dictionary no other stuff.'''
-
 
 prompt_uidai = '''Extract the following structured data from the image:
 Number: Number of the Aadhar card
 Gender: Male/Female /Others
 
 
-Please return the result in Dictionary format with exact field names as mentioned above 
+Please return the result in Dictionary format with exact field names as mentioned above  (if any field not found return null)
 just Dictionary no other stuff.
 '''
 
-prompt_jee_and_eamcet = ''''Extract the following structured data from the image:
+prompt_jee_and_eamcet = '''Extract the following structured data from the image:
 HT Number: Hall ticket number 
 Rank : Rank obtained
 
@@ -39,13 +38,24 @@ Rank : Rank obtained
 Please return the result in Dictionary format with exact field names as mentioned above (if any field not found return null)
 just Dictionary no other stuff.'''
 
-prompts=[prompt_SSC,prompt_uidai,prompt_jee_and_eamcet]
+prompt_TC = '''Extract the following structured data from the image:
+Mother Tongue: Mother tongue of the student(Only one)
+Nationality: Nationality of the student
+Religion: Religion of the student
+College Name: Name of the college
+Caste as per TC: Caste as per the Transfer Certificate (TC)
+
+
+Please return the result in Dictionary format with exact field names as mentioned above (if any field not found return null)
+just Dictionary no other stuff.'''
+
+prompts=[prompt_SSC,prompt_uidai,prompt_jee_and_eamcet,prompt_TC]
 
 def extract(linkstr,prompt):
     file_id_match = re.search(r'id=([a-zA-Z0-9_-]+)', linkstr).group(1)
     image_bytes = download_image_from_drive(file_id_match)
     gemini_response = json.loads(process_image_with_gemini(image_bytes, prompt).split("```")[1][5:])
-    print(f"Gemini Response for {file_id_match}: {gemini_response}")
+    # print(f"Gemini Response for {file_id_match}: {gemini_response}")
         # data_dict = json.loads(response.text.split("```")[1][5:])
     return gemini_response
 
@@ -53,6 +63,8 @@ def extract(linkstr,prompt):
 
 # extract("https://drive.google.com/open?id=1l52UOx3MHSZwO2VKhV1VtrDkLJ60ZIl1",prompt_SSC)
 
-extract("https://drive.google.com/open?id=1Fvt0dEOSyacvrsMcpyDBkw5vv5QeWRQi",prompt_uidai)
+# extract("https://drive.google.com/open?id=1Fvt0dEOSyacvrsMcpyDBkw5vv5QeWRQi",prompt_uidai)
 
+# extract("https://drive.google.com/open?id=1Fvt0dEOSyacvrsMcpyDBkw5vv5QeWRQi",prompt_jee_and_eamcet)
 
+# extract("https://drive.google.com/open?id=1nQPgkyfYhiM8Xix9NfbY7d8TXzNTfDO1",prompt_TC)

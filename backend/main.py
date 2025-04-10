@@ -16,8 +16,9 @@ async def receive_form_data(data: FormModel):
         form_data = data.dict()
         tenth_details = extract(form_data["tenthMarksMemo"],prompts[0])
         uidai_details = extract(form_data["aadhaarCard"],prompts[1])
-        # eamcet_details = extract(form_data["tgEAPCETRank"],prompts[2])
-        # jee_details = extract(form_data["jeeMainRank"],prompts[2])
+        eamcet_details = extract(form_data["tgEAPCETRank"],prompts[2])
+        jee_details = extract(form_data["jeeMainRank"],prompts[2])
+        tc_details = extract(form_data["transferCertificate"],prompts[3])
         
         # Create Student object and map address fields
         student = Student(
@@ -51,10 +52,15 @@ async def receive_form_data(data: FormModel):
             college_code='07',
             gender=uidai_details["Gender"],
             aadhaar_card_number=uidai_details["Number"],
-            # eamcet_hall_ticket_no=eamcet_details["HT Number"],
-            # eamcet_rank=eamcet_details["Rank"],
-            # jee_hall_ticket_no=jee_details["HT Number"],
-            # jee_mains_rank=jee_details["Rank"]
+            eamcet_hall_ticket_no=eamcet_details["HT Number"],
+            eamcet_rank=eamcet_details["Rank"],
+            jee_hall_ticket_no=jee_details["HT Number"],
+            jee_mains_rank=jee_details["Rank"],
+            mother_tongue=tc_details["Mother Tongue"],
+            religion=tc_details["Religion"],
+            caste_as_per_tc=tc_details["Caste as per TC"],
+            nationality=tc_details["Nationality"],
+            twelfth_college_name=tc_details["College Name"],
         )
         
         
