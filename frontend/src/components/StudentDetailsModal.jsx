@@ -2,13 +2,139 @@ import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { IoClose } from 'react-icons/io5';
 import { FiEdit2, FiSave } from 'react-icons/fi';
-import { students } from '../assets/Studentsdata.json';
 
-const StudentDetailsModal = ({ isOpen, onClose, onSave }) => {
+const SubjectMarksPopup = ({ isOpen, onClose, subjectScores, isDarkMode, isEditing, onScoreChange, onSaveSubjectMarks }) => {
+    if (!isOpen) return null;
+
+    // Calculate total marks - ensure we're using valid numbers only
+    const totalMarks = Object.values(subjectScores || {}).reduce((sum, score) => {
+        const numScore = Number(score) || 0;
+        return sum + numScore;
+    }, 0);
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+            <div className={`relative z-[70] ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col`}>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Subject Marks</h3>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={onSaveSubjectMarks}
+                            title="Save Subject Marks"
+                            className={`p-2 rounded-full ${
+                                isDarkMode 
+                                    ? 'bg-gray-700 hover:bg-gray-600 text-green-400 hover:text-green-300' 
+                                    : 'bg-gray-100 hover:bg-gray-200 text-green-600 hover:text-green-700'
+                            } transition-colors duration-200`}
+                        >
+                            <FiSave size={20} />
+                        </button>
+                        <button 
+                            onClick={onClose}
+                            title="Close"
+                            className={`p-2 rounded-full ${
+                                isDarkMode 
+                                    ? 'hover:bg-gray-700 text-gray-300' 
+                                    : 'hover:bg-gray-100 text-gray-600'
+                            }`}
+                        >
+                            <IoClose size={20} />
+                        </button>
+                    </div>
+                </div>
+                
+                <div className={`overflow-y-auto flex-1 pr-2 custom-scrollbar ${
+                    isDarkMode ? 'custom-scrollbar-dark' : 'custom-scrollbar-light'
+                }`}>
+                    <style jsx>{`
+                        .custom-scrollbar::-webkit-scrollbar {
+                            width: 8px;
+                        }
+                        
+                        .custom-scrollbar::-webkit-scrollbar-track {
+                            background: transparent;
+                        }
+                        
+                        .custom-scrollbar-light::-webkit-scrollbar-thumb {
+                            background-color: #CBD5E0;
+                            border-radius: 4px;
+                        }
+                        
+                        .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+                            background-color: #A0AEC0;
+                        }
+                        
+                        .custom-scrollbar-dark::-webkit-scrollbar-thumb {
+                            background-color: #4A5568;
+                            border-radius: 4px;
+                        }
+                        
+                        .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+                            background-color: #718096;
+                        }
+                    `}</style>
+                    <div className="space-y-4">
+                        {Object.entries(subjectScores || {}).map(([subject, score]) => (
+                            <div key={subject} className="flex items-center justify-between">
+                                <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    {subject}:
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={score || ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value === '' ? '' : Number(e.target.value);
+                                        onScoreChange(subject, value);
+                                    }}
+                                    readOnly={!isEditing}
+                                    className={`w-24 px-3 py-2 border rounded-md shadow-sm ${
+                                        isDarkMode 
+                                            ? 'bg-gray-700 border-gray-600 text-white' 
+                                            : 'bg-white border-gray-300 text-gray-900'
+                                    } ${!isEditing ? 'bg-opacity-50' : ''}`}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className={`mt-6 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <div className="flex items-center justify-between">
+                        <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Total Marks:
+                        </span>
+                        <span className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            {totalMarks}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
     const { isDarkMode } = useTheme();
     const [isEditing, setIsEditing] = useState(false);
-    const [editedStudent, setEditedStudent] = useState(students);
+    const [editedStudent, setEditedStudent] = useState(student);
     const [activeTab, setActiveTab] = useState('personal');
+    const [showSubjectMarks, setShowSubjectMarks] = useState(false);
+    const [tempSubjectScores, setTempSubjectScores] = useState({});
+
+    // Update editedStudent when student prop changes
+    React.useEffect(() => {
+        setEditedStudent(student);
+    }, [student]);
+
+    // Initialize temporary subject scores when popup opens
+    React.useEffect(() => {
+        if (showSubjectMarks) {
+            setTempSubjectScores(editedStudent.twelfth_subject_scores || {});
+        }
+    }, [showSubjectMarks]);
 
     const handleInputChange = (field, value) => {
         setEditedStudent(prev => ({
@@ -17,14 +143,59 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave }) => {
         }));
     };
 
+    const handleSubjectScoreChange = (subject, value) => {
+        setTempSubjectScores(prev => ({
+            ...prev,
+            [subject]: value
+        }));
+    };
+
+    const handleSaveSubjectMarks = () => {
+        // Calculate new total
+        const newTotal = Object.values(tempSubjectScores).reduce((sum, score) => {
+            const numScore = Number(score) || 0;
+            return sum + numScore;
+        }, 0);
+
+        // Update the main student data with the new scores and total
+        setEditedStudent(prev => ({
+            ...prev,
+            twelfth_subject_scores: tempSubjectScores,
+            twelfth_total_marks: String(newTotal)
+        }));
+
+        // Close the popup
+        setShowSubjectMarks(false);
+    };
+
     const handleSave = () => {
-        onSave(editedStudent);
+        // Ensure all subject scores are numbers
+        const normalizedScores = {};
+        Object.entries(editedStudent.twelfth_subject_scores || {}).forEach(([subject, score]) => {
+            normalizedScores[subject] = Number(score) || 0;
+        });
+
+        // Calculate final total
+        const finalTotal = Object.values(normalizedScores).reduce((sum, score) => sum + score, 0);
+
+        // Create the final student data with normalized scores and total
+        const updatedStudent = {
+            message: "Data Processed successfully",
+            data: {
+                ...editedStudent,
+                twelfth_subject_scores: normalizedScores,
+                twelfth_total_marks: String(finalTotal)
+            }
+        };
+
+        onSave(updatedStudent);
         setIsEditing(false);
+        setShowSubjectMarks(false); // Close the popup after saving
     };
 
     if (!isOpen) return null;
 
-    const renderField = (label, field, type = "text", readOnly = false) => {
+    const renderField = (label, field, type = "text", readOnly = false, onClick = null) => {
         return (
             <div className="mb-4">
                 <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -50,11 +221,12 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave }) => {
                         value={editedStudent[field] || ''}
                         onChange={(e) => handleInputChange(field, e.target.value)}
                         readOnly={!isEditing || readOnly}
+                        onClick={onClick}
                         className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm ${
                             isDarkMode 
                                 ? 'bg-gray-700 border-gray-600 text-white' 
                                 : 'bg-white border-gray-300 text-gray-900'
-                        } ${!isEditing || readOnly ? 'bg-opacity-50' : ''}`}
+                        } ${!isEditing || readOnly ? 'bg-opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''}`}
                     />
                 )}
             </div>
@@ -113,7 +285,7 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave }) => {
                             {renderField('College Name', 'twelfth_college_name')}
                             {renderField('Hall Ticket No', 'twelfth_hall_ticket_no')}
                             {renderField('Max Marks', 'twelfth_max_marks', 'number')}
-                            {renderField('Total Marks', 'twelfth_total_marks')}
+                            {renderField('Total Marks', 'twelfth_total_marks', 'number', false, () => setShowSubjectMarks(true))}
                             {renderField('Percentage', 'twelfth_percentage', 'number')}
                             {renderField('Month & Year', 'twelfth_month_year')}
                         </div>
@@ -172,7 +344,7 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave }) => {
                     {/* Header */}
                     <div className={`flex justify-between items-center px-6 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                         <h3 className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            Student Details - {students.student_name}
+                            Student Details - {editedStudent?.name}
                         </h3>
                         <div className="flex items-center space-x-2">
                             {!isEditing && (
@@ -205,7 +377,7 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave }) => {
                         {/* Left Side - Photo */}
                         <div className="w-1/4 p-6 border-r border-gray-200">
                             <img
-                                src={students.image_url || 'https://via.placeholder.com/300x400?text=Student+Photo'}
+                                src={editedStudent.image_url || 'https://via.placeholder.com/300x400?text=Student+Photo'}
                                 alt="Student"
                                 className="w-full rounded-lg shadow-lg object-cover aspect-[3/4]"
                             />
@@ -244,6 +416,16 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave }) => {
                     </div>
                 </div>
             </div>
+
+            <SubjectMarksPopup
+                isOpen={showSubjectMarks}
+                onClose={() => setShowSubjectMarks(false)}
+                subjectScores={tempSubjectScores}
+                isDarkMode={isDarkMode}
+                isEditing={isEditing}
+                onScoreChange={handleSubjectScoreChange}
+                onSaveSubjectMarks={handleSaveSubjectMarks}
+            />
         </div>
     );
 };

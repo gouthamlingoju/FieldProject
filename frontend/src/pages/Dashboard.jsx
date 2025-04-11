@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoSearchSharp } from "react-icons/io5";
 import { IoArrowUp, IoArrowDown } from "react-icons/io5";
-import { students } from '../assets/Studentsdata.json';
-import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import StudentDetailsModal from '../components/StudentDetailsModal';
+import studentsData from '../assets/Studentsdata.json';
 
 const Dashboard = ({ department }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,26 +12,32 @@ const Dashboard = ({ department }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [students, setStudents] = useState([]);
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Initialize students from the JSON data
+    setStudents(studentsData.students || []);
+  }, []);
 
   // Sort function
   const sortData = (data) => {
     return [...data].sort((a, b) => {
       if (sortConfig.key === 'date') {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
+        const dateA = new Date(a.data.date_of_birth);
+        const dateB = new Date(b.data.date_of_birth);
         return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
       }
       return 0;
     });
   };
 
-  // Filter students based on department and status
+  // Filter students based on department and search term
   const filteredStudents = sortData(students.filter((s) => {
-    const matchesSearch = s.student_name.trim().toLowerCase().includes(searchTerm.toLowerCase().trim());
-    const matchesDepartment = department === 'admin' ? true : s.department === department;
-    const matchesStatus = statusFilter === 'all' ? true : s.status.toLowerCase() === statusFilter;
+    const matchesSearch = s.data.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment = department === 'admin' ? true : s.data.branch_code?.toLowerCase() === department;
+    const matchesStatus = statusFilter === 'all' ? true : s.data.status?.toLowerCase() === statusFilter;
     
     return matchesSearch && matchesDepartment && matchesStatus;
   }));
@@ -90,9 +95,11 @@ const Dashboard = ({ department }) => {
   };
 
   const handleSaveStudent = (updatedStudent) => {
-    // Here you would typically make an API call to update the student data
-    console.log('Saving updated student:', updatedStudent);
-    // For now, we'll just close the modal
+    setStudents(prevStudents => 
+      prevStudents.map(student => 
+        student.data.student_id === updatedStudent.student_id ? updatedStudent : student
+      )
+    );
     handleCloseModal();
   };
 
@@ -100,7 +107,7 @@ const Dashboard = ({ department }) => {
     <div className={`min-h-full ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
       {selectedStudent && (
         <StudentDetailsModal
-          student={selectedStudent}
+          student={selectedStudent.data}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onSave={handleSaveStudent}
@@ -238,23 +245,23 @@ const Dashboard = ({ department }) => {
                   </thead>
                   
                   <tbody className={`divide-y ${isDarkMode ? 'divide-gray-600' : 'divide-gray-200'}`}>
-                    {filteredStudents.map((s) => (
+                    {filteredStudents.map((s, aadhaar_card_number) => (
                       <tr 
-                        key={s.aadhaar_card_number} 
+                        key={aadhaar_card_number} 
                         className={`${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'} cursor-pointer`}
                         onClick={() => handleStudentClick(s)}
                       >
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{s.student_name}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{s.data.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            s.status === "Verified" ? (isDarkMode ? "bg-green-900 text-green-300" : "bg-green-100 text-green-800") : ""
+                            s.data.status === "Verified" ? (isDarkMode ? "bg-green-900 text-green-300" : "bg-green-100 text-green-800") : ""
                           } ${
-                            s.status === "Pending" ? (isDarkMode ? "bg-yellow-900 text-yellow-300" : "bg-yellow-100 text-yellow-800") : ""
+                            s.data.status === "Pending" ? (isDarkMode ? "bg-yellow-900 text-yellow-300" : "bg-yellow-100 text-yellow-800") : ""
                           } ${
-                            s.status === "Not Verified" ? (isDarkMode ? "bg-red-900 text-red-300" : "bg-red-100 text-red-800") : ""
-                          }`}>{s.status}</span>
+                            s.data.status === "Not Verified" ? (isDarkMode ? "bg-red-900 text-red-300" : "bg-red-100 text-red-800") : ""
+                          }`}>{s.data.status}</span>
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{s.date}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{s.data.date_of_birth}</td>
                       </tr>
                     ))}
                   </tbody>
