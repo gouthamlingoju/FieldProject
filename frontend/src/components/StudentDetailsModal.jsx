@@ -49,29 +49,39 @@ const SubjectMarksPopup = ({ isOpen, onClose, subjectScores, isDarkMode, isEditi
                 }`}>
                     <style jsx>{`
                         .custom-scrollbar::-webkit-scrollbar {
-                            width: 8px;
+                            width: 6px;
+                            height: 6px;
                         }
                         
                         .custom-scrollbar::-webkit-scrollbar-track {
                             background: transparent;
+                            border-radius: 3px;
                         }
                         
                         .custom-scrollbar-light::-webkit-scrollbar-thumb {
-                            background-color: #CBD5E0;
-                            border-radius: 4px;
+                            background-color: rgba(156, 163, 175, 0.5);
+                            border-radius: 3px;
+                            transition: background-color 0.2s ease;
                         }
                         
                         .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
-                            background-color: #A0AEC0;
+                            background-color: rgba(156, 163, 175, 0.7);
                         }
                         
                         .custom-scrollbar-dark::-webkit-scrollbar-thumb {
-                            background-color: #4A5568;
-                            border-radius: 4px;
+                            background-color: rgba(75, 85, 99, 0.5);
+                            border-radius: 3px;
+                            transition: background-color 0.2s ease;
                         }
                         
                         .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-                            background-color: #718096;
+                            background-color: rgba(75, 85, 99, 0.7);
+                        }
+
+                        /* For Firefox */
+                        .custom-scrollbar {
+                            scrollbar-width: thin;
+                            scrollbar-color: ${isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(156, 163, 175, 0.5)'} transparent;
                         }
                     `}</style>
                     <div className="space-y-4">
@@ -123,6 +133,8 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
     const [activeTab, setActiveTab] = useState('personal');
     const [showSubjectMarks, setShowSubjectMarks] = useState(false);
     const [tempSubjectScores, setTempSubjectScores] = useState({});
+    const [leftWidth, setLeftWidth] = useState('33.33%');
+    const [isDragging, setIsDragging] = useState(false);
 
     // Update editedStudent when student prop changes
     React.useEffect(() => {
@@ -135,6 +147,41 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
             setTempSubjectScores(editedStudent.twelfth_subject_scores || {});
         }
     }, [showSubjectMarks]);
+
+    const handleMouseDown = (e) => {
+        setIsDragging(true);
+        e.preventDefault();
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging) return;
+        
+        const modal = document.querySelector('.modal-container');
+        if (!modal) return;
+        
+        const modalRect = modal.getBoundingClientRect();
+        const newWidth = ((e.clientX - modalRect.left) / modalRect.width) * 100;
+        
+        // Limit the width between 20% and 60%
+        const clampedWidth = Math.min(Math.max(newWidth, 20), 60);
+        setLeftWidth(`${clampedWidth}%`);
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    // Add event listeners for mouse up and move
+    React.useEffect(() => {
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging]);
 
     const handleInputChange = (field, value) => {
         setEditedStudent(prev => ({
@@ -338,7 +385,7 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
             <div className="flex items-center justify-center min-h-screen p-4">
                 <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
 
-                <div className={`relative w-[95vw] max-w-7xl mx-auto rounded-lg shadow-xl ${
+                <div className={`relative w-[95vw] max-w-7xl mx-auto rounded-lg shadow-xl modal-container ${
                     isDarkMode ? 'bg-gray-800' : 'bg-white'
                 }`}>
                     {/* Header */}
@@ -375,16 +422,22 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
                     {/* Main Content Area */}
                     <div className="flex h-[75vh]">
                         {/* Left Side - Photo */}
-                        <div className="w-1/4 p-6 border-r border-gray-200">
+                        <div className="p-6 border-r border-gray-200" style={{ width: leftWidth }}>
                             <img
-                                src={editedStudent.image_url || 'https://via.placeholder.com/300x400?text=Student+Photo'}
+                                src={editedStudent.image_url || "https://drive.google.com/uc?export=view&id=d/1Ow_5CWffrdOwvSQcmY5-n3GQYrDqbKmZ"}
                                 alt="Student"
                                 className="w-full rounded-lg shadow-lg object-cover aspect-[3/4]"
                             />
                         </div>
 
+                        {/* Resize Handle */}
+                        <div
+                            className={`w-1 cursor-col-resize ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} hover:bg-blue-500 transition-colors duration-200`}
+                            onMouseDown={handleMouseDown}
+                        />
+
                         {/* Right Side - Content */}
-                        <div className="w-3/4 flex flex-col">
+                        <div className="flex-1 flex flex-col" style={{ width: `calc(100% - ${leftWidth} - 4px)` }}>
                             {/* Tabs */}
                             <div className={`flex space-x-1 px-6 py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} bg-inherit`}>
                                 {tabs.map(tab => (
@@ -407,7 +460,44 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
                             </div>
 
                             {/* Scrollable Content */}
-                            <div className="flex-1 overflow-y-auto">
+                            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                <style jsx>{`
+                                    .custom-scrollbar::-webkit-scrollbar {
+                                        width: 6px;
+                                        height: 6px;
+                                    }
+                                    
+                                    .custom-scrollbar::-webkit-scrollbar-track {
+                                        background: transparent;
+                                        border-radius: 3px;
+                                    }
+                                    
+                                    .custom-scrollbar-light::-webkit-scrollbar-thumb {
+                                        background-color: rgba(156, 163, 175, 0.5);
+                                        border-radius: 3px;
+                                        transition: background-color 0.2s ease;
+                                    }
+                                    
+                                    .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+                                        background-color: rgba(156, 163, 175, 0.7);
+                                    }
+                                    
+                                    .custom-scrollbar-dark::-webkit-scrollbar-thumb {
+                                        background-color: rgba(75, 85, 99, 0.5);
+                                        border-radius: 3px;
+                                        transition: background-color 0.2s ease;
+                                    }
+                                    
+                                    .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+                                        background-color: rgba(75, 85, 99, 0.7);
+                                    }
+
+                                    /* For Firefox */
+                                    .custom-scrollbar {
+                                        scrollbar-width: thin;
+                                        scrollbar-color: ${isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(156, 163, 175, 0.5)'} transparent;
+                                    }
+                                `}</style>
                                 <div className="p-6 pb-20">
                                     {renderTabContent()}
                                 </div>
