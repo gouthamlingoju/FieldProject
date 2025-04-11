@@ -5,6 +5,8 @@ from typing import Optional
 class Address(BaseModel):
     street: Optional[str] = ""
     village: Optional[str] = ""
+    mandal: Optional[str] = ""
+    district: Optional[str] = ""    
     state: Optional[str] = ""
     pincode: Optional[str] = ""
 
