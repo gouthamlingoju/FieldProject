@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { IoClose } from 'react-icons/io5';
 import { FiEdit2, FiSave } from 'react-icons/fi';
+import { AiOutlineZoomIn, AiOutlineZoomOut } from 'react-icons/ai';
+import { BiReset } from 'react-icons/bi';
 
 const SubjectMarksPopup = ({ isOpen, onClose, subjectScores, isDarkMode, isEditing, onScoreChange, onSaveSubjectMarks }) => {
     if (!isOpen) return null;
@@ -131,10 +133,13 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedStudent, setEditedStudent] = useState(student);
     const [activeTab, setActiveTab] = useState('personal');
+    const [activeSection, setActiveSection] = useState(null);
     const [showSubjectMarks, setShowSubjectMarks] = useState(false);
     const [tempSubjectScores, setTempSubjectScores] = useState({});
-    const [leftWidth, setLeftWidth] = useState('33.33%');
+    const [zoomLevel, setZoomLevel] = useState(1);
     const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [position, setPosition] = useState({ x: 0, y: 0 });
 
     // Update editedStudent when student prop changes
     React.useEffect(() => {
@@ -147,41 +152,6 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
             setTempSubjectScores(editedStudent.twelfth_subject_scores || {});
         }
     }, [showSubjectMarks]);
-
-    const handleMouseDown = (e) => {
-        setIsDragging(true);
-        e.preventDefault();
-    };
-
-    const handleMouseMove = (e) => {
-        if (!isDragging) return;
-        
-        const modal = document.querySelector('.modal-container');
-        if (!modal) return;
-        
-        const modalRect = modal.getBoundingClientRect();
-        const newWidth = ((e.clientX - modalRect.left) / modalRect.width) * 100;
-        
-        // Limit the width between 20% and 60%
-        const clampedWidth = Math.min(Math.max(newWidth, 20), 60);
-        setLeftWidth(`${clampedWidth}%`);
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
-
-    // Add event listeners for mouse up and move
-    React.useEffect(() => {
-        if (isDragging) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        }
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [isDragging]);
 
     const handleInputChange = (field, value) => {
         setEditedStudent(prev => ({
@@ -240,6 +210,103 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
         setShowSubjectMarks(false); // Close the popup after saving
     };
 
+    const getImageForTab = () => {
+        switch (activeTab) {
+            case 'personal':
+            case 'contact':
+                return '/src/assets/AadhaarCard.jpg';
+            case 'academic':
+                if (activeSection === 'tenth') {
+                    return '/src/assets/SSC MEMO (4).jpg';
+                } else if (activeSection === 'twelfth') {
+                    return '/src/assets/INTER MEMO.jpg';
+                }
+                return editedStudent.image_url || 'https://via.placeholder.com/300x400?text=Student+Photo';
+            default:
+                return editedStudent.image_url || 'https://via.placeholder.com/300x400?text=Student+Photo';
+        }
+    };
+
+    const handleSectionClick = (section) => {
+        setActiveSection(section);
+    };
+
+    // Handle zoom in/out
+    const handleZoomIn = () => {
+        setZoomLevel(prev => Math.min(prev + 0.25, 3));
+    };
+
+    const handleZoomOut = () => {
+        setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
+    };
+
+    const handleReset = () => {
+        setZoomLevel(1);
+        setPosition({ x: 0, y: 0 });
+    };
+
+    // Handle mouse wheel zoom
+    const handleWheel = (e) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                handleZoomIn();
+            } else {
+                handleZoomOut();
+            }
+        }
+    };
+
+    // Handle image drag when zoomed
+    const handleImageMouseDown = (e) => {
+        if (zoomLevel > 1) {  // Only allow dragging when zoomed in
+            setIsDragging(true);
+            setDragStart({
+                x: e.clientX - position.x,
+                y: e.clientY - position.y
+            });
+            e.preventDefault();
+        }
+    };
+
+    const handleImageMouseMove = (e) => {
+        if (isDragging && zoomLevel > 1) {
+            const newX = e.clientX - dragStart.x;
+            const newY = e.clientY - dragStart.y;
+            
+            // Calculate bounds based on zoom level
+            const bounds = {
+                x: Math.abs((zoomLevel - 1) * 300),  // Approximate bounds based on image size
+                y: Math.abs((zoomLevel - 1) * 400)
+            };
+            
+            // Limit the panning within bounds
+            const clampedX = Math.min(Math.max(newX, -bounds.x), bounds.x);
+            const clampedY = Math.min(Math.max(newY, -bounds.y), bounds.y);
+            
+            setPosition({
+                x: clampedX,
+                y: clampedY
+            });
+        }
+    };
+
+    const handleImageMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    // Add event listeners for image drag
+    React.useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', handleImageMouseMove);
+            window.addEventListener('mouseup', handleImageMouseUp);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handleImageMouseMove);
+            window.removeEventListener('mouseup', handleImageMouseUp);
+        };
+    }, [isDragging, dragStart, zoomLevel]);
+
     if (!isOpen) return null;
 
     const renderField = (label, field, type = "text", readOnly = false, onClick = null) => {
@@ -284,7 +351,6 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
         { id: 'personal', label: 'Personal Information' },
         { id: 'academic', label: 'Academic Information' },
         { id: 'contact', label: 'Contact Details' },
-        { id: 'address', label: 'Address' },
         { id: 'category', label: 'Category & Status' }
     ];
 
@@ -311,13 +377,24 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
                 return (
                     <div className="space-y-6">
                         <div>
-                            <h5 className="font-medium mb-4">Basic Details</h5>
+                            <h5 className="font-medium mb-4 text-blue-500 font-large">Basic Details</h5>
                             {renderField('Degree Code', 'degree_code')}
                             {renderField('Branch Code', 'branch_code')}
                             {renderField('Section', 'section')}
                         </div>
-                        <div>
-                            <h5 className="font-medium mb-4">10th Details</h5>
+                        <div 
+                            onClick={() => handleSectionClick('tenth')} 
+                            className={`cursor-pointer p-4 rounded-lg transition-colors duration-200 ${
+                                activeSection === 'tenth' 
+                                    ? isDarkMode 
+                                        ? 'bg-gray-700' 
+                                        : 'bg-gray-100'
+                                    : isDarkMode
+                                        ? 'hover:bg-gray-700/50'
+                                        : 'hover:bg-gray-50'
+                            }`}
+                        >
+                            <h5 className="font-large mb-4 text-blue-500">10th Details</h5>
                             {renderField('Board Name', 'tenth_board_name')}
                             {renderField('School Name', 'tenth_school_name')}
                             {renderField('Hall Ticket No', 'tenth_hall_ticket_no')}
@@ -326,8 +403,19 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
                             {renderField('Percentage', 'tenth_percentage', 'number')}
                             {renderField('Month & Year', 'tenth_month_year')}
                         </div>
-                        <div>
-                            <h5 className="font-medium mb-4">12th Details</h5>
+                        <div 
+                            onClick={() => handleSectionClick('twelfth')} 
+                            className={`cursor-pointer p-4 rounded-lg transition-colors duration-200 ${
+                                activeSection === 'twelfth' 
+                                    ? isDarkMode 
+                                        ? 'bg-gray-700' 
+                                        : 'bg-gray-100'
+                                    : isDarkMode
+                                        ? 'hover:bg-gray-700/50'
+                                        : 'hover:bg-gray-50'
+                            }`}
+                        >
+                            <h5 className="mb-4 text-blue-500 font-large">12th Details</h5>
                             {renderField('Board Name', 'twelfth_board_name')}
                             {renderField('College Name', 'twelfth_college_name')}
                             {renderField('Hall Ticket No', 'twelfth_hall_ticket_no')}
@@ -340,25 +428,26 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
                 );
             case 'contact':
                 return (
-                    <div className="space-y-4">
-                        {renderField('Student Phone', 'student_phone_no')}
-                        {renderField('Parent Phone', 'parent_phone_no')}
-                        {renderField('VNR Email', 'vnr_email', 'email')}
-                        {renderField('Student Email', 'student_email', 'email')}
-                        {renderField('Parent Email', 'parent_email', 'email')}
-                    </div>
-                );
-            case 'address':
-                return (
-                    <div className="space-y-4">
-                        {renderField('Door No', 'address_door_no')}
-                        {renderField('Street', 'address_street')}
-                        {renderField('Village/Town', 'address_village_town')}
-                        {renderField('Mandal', 'address_mandal')}
-                        {renderField('District', 'address_district')}
-                        {renderField('State', 'address_state')}
-                        {renderField('Pincode', 'address_pincode')}
-                        {renderField('Rural/Urban', 'rural_urban')}
+                    <div className="space-y-6">
+                        <div>
+                            <h5 className="font-medium mb-4">Contact Information</h5>
+                            {renderField('Student Phone', 'student_phone_no')}
+                            {renderField('Parent Phone', 'parent_phone_no')}
+                            {renderField('VNR Email', 'vnr_email', 'email')}
+                            {renderField('Student Email', 'student_email', 'email')}
+                            {renderField('Parent Email', 'parent_email', 'email')}
+                        </div>
+                        <div>
+                            <h5 className="font-medium mb-4">Address Information</h5>
+                            {renderField('Door No', 'address_door_no')}
+                            {renderField('Street', 'address_street')}
+                            {renderField('Village/Town', 'address_village_town')}
+                            {renderField('Mandal', 'address_mandal')}
+                            {renderField('District', 'address_district')}
+                            {renderField('State', 'address_state')}
+                            {renderField('Pincode', 'address_pincode')}
+                            {renderField('Rural/Urban', 'rural_urban')}
+                        </div>
                     </div>
                 );
             case 'category':
@@ -421,23 +510,99 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
 
                     {/* Main Content Area */}
                     <div className="flex h-[75vh]">
-                        {/* Left Side - Photo */}
-                        <div className="p-6 border-r border-gray-200" style={{ width: leftWidth }}>
-                            <img
-                                src={editedStudent.image_url || "https://drive.google.com/uc?export=view&id=d/1Ow_5CWffrdOwvSQcmY5-n3GQYrDqbKmZ"}
-                                alt="Student"
-                                className="w-full rounded-lg shadow-lg object-cover aspect-[3/4]"
-                            />
+                        {/* Left Side - Photo/Document */}
+                        <div className="relative w-1/2 flex-shrink-0">
+                            <div className="p-6 h-full border-r border-gray-200 overflow-y-auto custom-scrollbar">
+                                <style jsx>{`
+                                    .custom-scrollbar::-webkit-scrollbar {
+                                        width: 4px;
+                                        height: 4px;
+                                    }
+                                    
+                                    .custom-scrollbar::-webkit-scrollbar-track {
+                                        background: transparent;
+                                        border-radius: 2px;
+                                    }
+                                    
+                                    .custom-scrollbar::-webkit-scrollbar-thumb {
+                                        background-color: ${isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(156, 163, 175, 0.3)'};
+                                        border-radius: 2px;
+                                        transition: background-color 0.2s ease;
+                                    }
+                                    
+                                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                                        background-color: ${isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(156, 163, 175, 0.5)'};
+                                    }
+
+                                    /* For Firefox */
+                                    .custom-scrollbar {
+                                        scrollbar-width: thin;
+                                        scrollbar-color: ${isDarkMode ? 'rgba(75, 85, 99, 0.3)' : 'rgba(156, 163, 175, 0.3)'} transparent;
+                                    }
+                                `}</style>
+                                {/* Zoom Controls */}
+                                <div className={`absolute top-8 right-8 flex flex-col space-y-2 z-10 bg-opacity-75 ${
+                                    isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                } rounded-lg p-2 shadow-lg`}>
+                                    <button
+                                        onClick={handleZoomIn}
+                                        className={`p-2 rounded-lg ${
+                                            isDarkMode 
+                                                ? 'hover:bg-gray-700 text-gray-300' 
+                                                : 'hover:bg-gray-100 text-gray-600'
+                                        }`}
+                                        title="Zoom In"
+                                    >
+                                        <AiOutlineZoomIn size={20} />
+                                    </button>
+                                    <button
+                                        onClick={handleZoomOut}
+                                        className={`p-2 rounded-lg ${
+                                            isDarkMode 
+                                                ? 'hover:bg-gray-700 text-gray-300' 
+                                                : 'hover:bg-gray-100 text-gray-600'
+                                        }`}
+                                        title="Zoom Out"
+                                    >
+                                        <AiOutlineZoomOut size={20} />
+                                    </button>
+                                    <button
+                                        onClick={handleReset}
+                                        className={`p-2 rounded-lg ${
+                                            isDarkMode 
+                                                ? 'hover:bg-gray-700 text-gray-300' 
+                                                : 'hover:bg-gray-100 text-gray-600'
+                                        }`}
+                                        title="Reset Zoom"
+                                    >
+                                        <BiReset size={20} />
+                                    </button>
+                                </div>
+                                {/* Image Container */}
+                                <div 
+                                    className="w-full h-full overflow-hidden"
+                                    onWheel={handleWheel}
+                                >
+                                    <img
+                                        src={getImageForTab()}
+                                        alt={activeTab === 'personal' || activeTab === 'contact' ? 'Aadhar Card' : 
+                                             activeSection === 'tenth' ? 'SSC Memo' : 
+                                             activeSection === 'twelfth' ? 'Inter Memo' : 'Student Photo'}
+                                        className={`w-full h-full rounded-lg shadow-lg object-contain ${zoomLevel > 1 ? 'cursor-move' : ''}`}
+                                        style={{
+                                            transform: `scale(${zoomLevel}) translate(${position.x / zoomLevel}px, ${position.y / zoomLevel}px)`,
+                                            transition: isDragging ? 'none' : 'transform 0.2s',
+                                            transformOrigin: 'center center'
+                                        }}
+                                        onMouseDown={handleImageMouseDown}
+                                        draggable={false}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Resize Handle */}
-                        <div
-                            className={`w-1 cursor-col-resize ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} hover:bg-blue-500 transition-colors duration-200`}
-                            onMouseDown={handleMouseDown}
-                        />
-
                         {/* Right Side - Content */}
-                        <div className="flex-1 flex flex-col" style={{ width: `calc(100% - ${leftWidth} - 4px)` }}>
+                        <div className="w-1/2 flex flex-col">
                             {/* Tabs */}
                             <div className={`flex space-x-1 px-6 py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} bg-inherit`}>
                                 {tabs.map(tab => (
@@ -461,44 +626,7 @@ const StudentDetailsModal = ({ isOpen, onClose, onSave, student }) => {
 
                             {/* Scrollable Content */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                <style jsx>{`
-                                    .custom-scrollbar::-webkit-scrollbar {
-                                        width: 6px;
-                                        height: 6px;
-                                    }
-                                    
-                                    .custom-scrollbar::-webkit-scrollbar-track {
-                                        background: transparent;
-                                        border-radius: 3px;
-                                    }
-                                    
-                                    .custom-scrollbar-light::-webkit-scrollbar-thumb {
-                                        background-color: rgba(156, 163, 175, 0.5);
-                                        border-radius: 3px;
-                                        transition: background-color 0.2s ease;
-                                    }
-                                    
-                                    .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
-                                        background-color: rgba(156, 163, 175, 0.7);
-                                    }
-                                    
-                                    .custom-scrollbar-dark::-webkit-scrollbar-thumb {
-                                        background-color: rgba(75, 85, 99, 0.5);
-                                        border-radius: 3px;
-                                        transition: background-color 0.2s ease;
-                                    }
-                                    
-                                    .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-                                        background-color: rgba(75, 85, 99, 0.7);
-                                    }
-
-                                    /* For Firefox */
-                                    .custom-scrollbar {
-                                        scrollbar-width: thin;
-                                        scrollbar-color: ${isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(156, 163, 175, 0.5)'} transparent;
-                                    }
-                                `}</style>
-                                <div className="p-6 pb-20">
+                                <div className="p-6">
                                     {renderTabContent()}
                                 </div>
                             </div>
